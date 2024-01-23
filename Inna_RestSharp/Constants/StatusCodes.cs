@@ -14,9 +14,8 @@ namespace Inna_RestSharp.Constants
 
     public class StatusCodes
     {
-        public string ExpectedStatusCode { get; set; }
+        public string StatusCode { get; set; }
     }
-
 
 }
 

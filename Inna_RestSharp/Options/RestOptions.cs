@@ -29,49 +29,10 @@ namespace Inna_RestSharp.Options
             return _restClient;
         }
 
-        public async Task<RestResponse> ExecuteMethod(string endpoint)
+        public async Task<string>GetResponseAsync(RestRequest request)
         {
-            var request = new RestRequest(endpoint, Method.Get);
-            return await _restClient.ExecuteAsync(request);
-            
-        }
-
-        public string GetResponse(RestRequest request)
-        {
-            _restResponse = _restClient.GetAsync(request).GetAwaiter().GetResult();
+            _restResponse = await _restClient.GetAsync(request);
             return _restResponse.Content;
-
-        }
-
-        public class User
-        {
-            public string Name { get; set; }
-            public string Job { get; set; }
-
-        }
-
-        public class RegisterData
-        {
-            public string Email { get; set; }
-            public string Password { get; set; }
-        }
-        
-        public class Data
-        {
-            [JsonPropertyName("first_name")]
-            public string FirstName { get; set; }
-
-            [JsonPropertyName("last_name")]
-            public string LastName { get; set; }
-
-            [JsonPropertyName("email")]
-            public string Email { get; set; }
-
-            [JsonPropertyName("id")]
-            public string Id { get; set; }
-
-            [JsonPropertyName("avatar")]
-            public string Avatar { get; set; }
         }
 
         //public async Task GetDataFromApi(string endpoint, RestClient _restClient)
@@ -87,6 +48,6 @@ namespace Inna_RestSharp.Options
         //    Console.WriteLine($"Avatar: {userData.Avatar}");
         //}
 
-        
+
     }
 }
