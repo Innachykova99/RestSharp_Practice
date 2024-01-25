@@ -1,231 +1,253 @@
 ﻿using Inna_RestSharp.Constants;
 using Inna_RestSharp.Models;
-using log4net;
 using Newtonsoft.Json;
 using RestSharp;
+using System.Net;
 using TechTalk.SpecFlow.Assist;
+using TechTalk.SpecFlow.Infrastructure;
 
 namespace Inna_RestSharp.Steps
 {
     [Binding]
-    public class Inna_RestSharpActionsWithUsersSteps
+    public class ActionsWithUsersAPISteps : CommonSteps
     {
         private readonly ScenarioContext _scenarioContext;
-        private RestClient _restClient;
-        private RestResponse _restResponse;
-        private StatusCodes statusCodes;
-        private static ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private readonly RestClient _restClient;
+        private readonly ISpecFlowOutputHelper _specFlowOutputHelper;
+        private const string baseUrl = "https://reqres.in";
 
-        public Inna_RestSharpActionsWithUsersSteps(ScenarioContext scenarioContext)
+        public ActionsWithUsersAPISteps(ScenarioContext scenarioContext, ISpecFlowOutputHelper outputHelper) : base(scenarioContext, outputHelper)
         {
-            _scenarioContext = scenarioContext;
-            _restClient = new RestClient();
-        }
-
-        [Given(@"The Users API URL is ""([^""]*)""")]
-        public void GivenTheUsersAPILinkIs(string baseUrl)
-        {
-            _restClient = new RestClient(baseUrl);
-        }
-
-        [Given(@"the Endpoint is ""([^""]*)""")]
-        public void GivenTheEndpointIs(string endpoint)
-        {
-            _restClient = new RestClient(endpoint);
-            _scenarioContext.Add(endpoint, "Endpoint");
+            _scenarioContext = scenarioContext ?? throw new ArgumentException(nameof(scenarioContext));
+            _specFlowOutputHelper = outputHelper ?? throw new ArgumentNullException(nameof(outputHelper));
+            _restClient = new RestClient(new Uri(baseUrl));
         }
 
         [When(@"the user sends the (GET|) request to page (.*) of users list")]
-        public void WhenTheUserSendsTheRequestToGetPageOfUsersList(int pageNumber, string method)
+        public void WhenTheUserSendsTheRequestToGetPageOfUsersList(Method method, int pageNumber)
         {
-            _restClient = new RestClient(new Uri(RouteConstants.UserOperationEndpoint, $"?page={pageNumber}"));
+            var getRequestListOfUsers = new RestRequest($"{RouteConstants.UserOperationEndpoint}?page={pageNumber}", method);
+            var response = _restClient.Execute(getRequestListOfUsers);
 
-            var restMethod = (Method)Enum.Parse(typeof(Method), method, true);
-
-            var getRequestListOfUsers = new RestRequest();
-            _restResponse = _restClient.Execute(getRequestListOfUsers);
-
-            _scenarioContext.Add(ContextConstants.Response, getRequestListOfUsers);
-            _scenarioContext.Add(StatusCodesContainer.StatusCode, _restResponse);
-        }
-
-        [Then(@"the ""([^""]*)"" status code is received")]
-        public void ThenTheStatusCodeIsReceived(string expectedStatusCode)
-        {
-            var statusCodeObject = _scenarioContext.Get<StatusCodes>(StatusCodesContainer.StatusCode);
-
-            string statusCodeString = statusCodeObject.StatusCode;
-
-            int expectedStatusCodeValue = int.Parse(expectedStatusCode);
-            int actualStatusCodeValue = int.Parse(statusCodeString);
-
-            actualStatusCodeValue.Should().Be(expectedStatusCodeValue);
-        }
-
-        [Then(@"the list of users is returned")]
-        public void ThenTheListOfUsersIsDisplayed()
-        {
-            var usersList = JsonConvert.DeserializeObject<UsersList>(_restResponse.Content);
-
-            foreach (var item in usersList.Items)
-            {
-                log.Info($"Id: {item.Id}");
-                log.Info($"Email: {item.Email}");
-                log.Info($"First Name: {item.FirstName}");
-                log.Info($"Last Name: {item.LastName}");
-                log.Info($"Avatar: {item.Avatar}");
-            }
+            _scenarioContext.Add(ContextConstants.Response, response);
         }
 
         [When(@"User sends the (GET|) request to page (.*) for the not found single user")]
-        public void WhenUserSendsTheGETRequestToPageForTheNotFoundSingleUser(int pageNumber, Method restMethod)
+        public void WhenUserSendsTheGETRequestToPageForTheNotFoundSingleUser(Method method, int pageNumber)
         {
-            _restClient = new RestClient(new Uri(RouteConstants.UserOperationEndpoint, $"{pageNumber}"));
+            var getRequestToNotFoundUser = new RestRequest($"{RouteConstants.UserOperationEndpoint}{pageNumber}", method);
+            var response = _restClient.Execute(getRequestToNotFoundUser);
 
-            var getRequestToNotFoundUser = new RestRequest(restMethod.ToString());
-            _restResponse = _restClient.Execute(getRequestToNotFoundUser);
-            _scenarioContext.Add(StatusCodesContainer.StatusCode, _restResponse.StatusCode.ToString());
+            _scenarioContext.Add(ContextConstants.Response, response);
         }
 
         [When(@"User sends the (GET|) request to the single user for the page (.*)")]
-        public void WhenUserSendsTheGETRequestToTheSingleUserForThePage(int pageNumber, Method restMethod)
+        public void WhenUserSendsTheGETRequestToTheSingleUserForThePage(Method method, int pageNumber)
         {
-            _restClient = new RestClient(new Uri(RouteConstants.UserOperationEndpoint, $"{pageNumber}"));
+            var getRequestToSingleUser = new RestRequest($"{RouteConstants.UserOperationEndpoint}{pageNumber}", method);
+            var response = _restClient.Execute(getRequestToSingleUser);
 
-            var getRequestToSingleUser = new RestRequest(restMethod.ToString());
-            _restResponse = _restClient.Execute(getRequestToSingleUser);
-            _scenarioContext.Add(StatusCodesContainer.StatusCode, _restResponse.StatusCode.ToString());
-        }
-
-        [Then(@"the user data is returned")]
-        public void ThenTheUserDataIsReturned()
-        {
-            var singleUserData = JsonConvert.DeserializeObject<UsersList>(_restResponse.Content);
-
-            foreach (var item in singleUserData.Items)
-            {
-                log.Info($"Id: {item.Id}");
-                log.Info($"Email: {item.Email}");
-                log.Info($"First Name: {item.FirstName}");
-                log.Info($"Last Name: {item.LastName}");
-                log.Info($"Avatar: {item.Avatar}");
-            }
+            _scenarioContext.Add(ContextConstants.Response, response);
         }
 
         [When(@"User sends the (POST|) request to users page to create a user with data in the request body")]
-        public void WhenUserSendsThePOSTRequestToUsersPageToCreateAUserWithDataInTheRequestBody(Method restMethod, Table table)
+        public void WhenUserSendsThePOSTRequestToUsersPageToCreateAUserWithDataInTheRequestBody(Method method, Table table)
         {
-            _restClient = new RestClient(RouteConstants.UserOperationEndpoint);
-
             var createUserData = table.CreateInstance<CreateUser>();
-            var postRequestCreateUser = new RestRequest(restMethod.ToString())
-            .AddJsonBody(createUserData);
-            _restResponse = _restClient.Execute(postRequestCreateUser);
+            var postRequestCreateUser = new RestRequest(RouteConstants.UserOperationEndpoint, method)
+                .AddJsonBody(createUserData);
+            var response = _restClient.Execute(postRequestCreateUser);
 
-            _scenarioContext.Add(StatusCodesContainer.StatusCode, _restResponse.StatusCode.ToString());
+            _scenarioContext.Add(ContextConstants.Response, response);
             _scenarioContext["CreateUserData"] = createUserData;
 
         }
 
-        [Then(@"the created user data is returned")]
-        public void ThenTheCreatedUserDataIsReturned()
-        {
-            CreateUser postJsonResponse = JsonConvert.DeserializeObject<CreateUser>(_restResponse.Content);
-
-            log.Info($"Name: {postJsonResponse.Name}");
-            log.Info($"Job: {postJsonResponse.Job}");
-            log.Info($"ID: {postJsonResponse.Id}");
-            log.Info($"CreatedAt: {postJsonResponse.CreatedAt}");
-        }
-
         [When(@"User sends the (PUT|PATCH|) request to users page (.*) to update a user with data in the request body")]
-        public void WhenUserSendsThePUTRequestToUpdateAUserWithDataInTheRequestBody(Method restMethod, Table table, int pageNumber)
+        public void WhenUserSendsThePUTRequestToUpdateAUserWithDataInTheRequestBody(Method method, int pageNumber, Table table)
         {
-            _restClient = new RestClient(new Uri(RouteConstants.UserOperationEndpoint, $"{pageNumber}"));
-
             var updateUser = table.CreateInstance<UpdateUser>();
-            var postRequestUpdateUser = new RestRequest(restMethod.ToString())
-                .AddJsonBody(updateUser);
-            _restResponse = _restClient.Execute(postRequestUpdateUser);
-        }
+            var requestToUpdateUser = new RestRequest($"{RouteConstants.UserOperationEndpoint}?page={pageNumber}", method)
+               .AddJsonBody(updateUser);
+            var response = _restClient.Execute(requestToUpdateUser);
 
-        [Then(@"the updated user data is returned")]
-        public void ThenTheUpdatedUserDataIsReturned()
-        {
-            UpdateUser updateJsonResponse = JsonConvert.DeserializeObject<UpdateUser>(_restResponse.Content);
-
-            log.Info($"Name: {updateJsonResponse.Name}");
-            log.Info($"Job: {updateJsonResponse.Job}");
-            log.Info($"Updated at: {updateJsonResponse.UpdatedAt}");
+            _scenarioContext.Add(ContextConstants.Response, response);
         }
 
         [When(@"User sends the (DELETE|) request to user page (.*) to delete a user")]
-        public void WhenUserSendsTheDELETERequestToDeleteAUser(int pageNumber, Method restMethod)
+        public void WhenUserSendsTheDELETERequestToDeleteAUser(Method method, int pageNumber)
         {
-            _restClient = new RestClient(new Uri(RouteConstants.UserOperationEndpoint, $"{pageNumber}"));
-            var requestDeleteUser = new RestRequest(restMethod.ToString());
-            _restResponse = _restClient.Execute(requestDeleteUser);
+            var requestDeleteUser = new RestRequest($"{RouteConstants.UserOperationEndpoint}?page={pageNumber}", method);
+            var response = _restClient.Execute(requestDeleteUser);
+
+            _scenarioContext.Add(ContextConstants.Response, response);
         }
 
         [When(@"User sends the (POST|) request to register successfully with data in the request body")]
-        public void WhenUserSendsThePOSTRequestToRegisterSuccessfullyWithDataInTheRequestBody(Method restMethod, Table table)
+        public void WhenUserSendsThePOSTRequestToRegisterSuccessfullyWithDataInTheRequestBody(Method method, Table table)
         {
-            _restClient = new RestClient(RouteConstants.RegisterEndpoint);
             var registerData = table.CreateInstance<RegisterData>();
-            var postRequestSuccessfulRegister = new RestRequest(restMethod.ToString())
+
+            var postRequestSuccessfulRegister = new RestRequest(RouteConstants.RegisterEndpoint, method)
               .AddJsonBody(registerData);
-            _restResponse = _restClient.Execute(postRequestSuccessfulRegister);
+            var response = _restClient.Execute(postRequestSuccessfulRegister);
+
+            _scenarioContext.Add(ContextConstants.Response, response);
+        }
+
+        [When(@"User sends the (POST|) request to login unsuccessfully with data in the request body")]
+        public void WhenUserSendsThePOSTRequestToLoginUnsuccessfullyWithDataInTheRequestBody(Method method, Table table)
+        {
+            var loginData = table.CreateInstance<LoginData>();
+
+            var postRequestUnsuccessfulLogin = new RestRequest(RouteConstants.LoginEndpoint, method)
+            .AddJsonBody(loginData);
+            var response = _restClient.Execute(postRequestUnsuccessfulLogin);
+
+            _scenarioContext.Add(ContextConstants.Response, response);
+        }
+
+        [When(@"User sends the (GET|) request to page (.*) for the delayed response")]
+        public void WhenUserSendsTheGETRequestForTheDelayedResponse(Method method, int pageNumber)
+        {
+            var postRequestDelayed = new RestRequest($"{RouteConstants.UserOperationEndpoint}?delay ={pageNumber}", method);
+
+            var response = _restClient.Execute(postRequestDelayed);
+
+            _scenarioContext.Add(ContextConstants.Response, response);
+        }
+
+        [Then(@"the list of users is returned")]
+        public void ThenTheListOfUsersIsDisplayed(Table expectedTableData)
+        {
+            var expectedData = expectedTableData.CreateSet<UserInformation>();
+            var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
+            UsersList usersList = JsonConvert.DeserializeObject<UsersList>(responseBody);
+
+            foreach (var expectedUser in expectedData)
+            {
+                var actualUser = usersList.Items.FirstOrDefault(u => u.Id == expectedUser.Id); // don't get how it works, maybe find another way
+
+                actualUser.Email.Should().Be(expectedUser.Email);
+                actualUser.FirstName.Should().Be(expectedUser.FirstName);
+                actualUser.LastName.Should().Be(expectedUser.LastName);
+                actualUser.Avatar.Should().Be(expectedUser.Avatar);
+
+                _specFlowOutputHelper.WriteLine($"Id: {actualUser.Id}");
+                _specFlowOutputHelper.WriteLine($"Email: {actualUser.Email}");
+                _specFlowOutputHelper.WriteLine($"First Name: {actualUser.FirstName}");
+                _specFlowOutputHelper.WriteLine($"Last Name: {actualUser.LastName}");
+                _specFlowOutputHelper.WriteLine($"Avatar: {actualUser.Avatar}");
+            }
+
+            _specFlowOutputHelper.WriteLine("------------------------------------------");
+        }
+
+        [Then(@"the user data is returned")] // don't work correctly: Expected property singleUserData.<property> to be "...", but found <null>.
+        public void ThenTheUserDataIsReturned(Table expectedTableData)
+        {
+            var expectedData = expectedTableData.CreateInstance<UserInformation>();
+            var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
+            UserInformation singleUserData = JsonConvert.DeserializeObject<UserInformation>(responseBody);
+
+            _specFlowOutputHelper.WriteLine($"Response Body: {responseBody}"); // for debug to ensure that correct response data received
+            singleUserData.Should().BeEquivalentTo(expectedData);
+
+            _specFlowOutputHelper.WriteLine($"Id: {singleUserData.Id}");
+            _specFlowOutputHelper.WriteLine($"Email: {singleUserData.Email}");
+            _specFlowOutputHelper.WriteLine($"First Name: {singleUserData.FirstName}");
+            _specFlowOutputHelper.WriteLine($"Last Name: {singleUserData.LastName}");
+            _specFlowOutputHelper.WriteLine($"Avatar: {singleUserData.Avatar}");
+
+            _specFlowOutputHelper.WriteLine("------------------------------------------");
+        }
+
+        [Then(@"the created user data is returned")]
+        public void ThenTheCreatedUserDataIsReturned(Table expectedTableData)
+        {
+            var expectedData = expectedTableData.CreateInstance<CreateUser>();
+            var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
+          
+            CreateUser createdUserData = JsonConvert.DeserializeObject<CreateUser>(responseBody);
+            createdUserData.Should().BeEquivalentTo(expectedData);
+
+            _specFlowOutputHelper.WriteLine($"Name: {createdUserData.Name}");
+            _specFlowOutputHelper.WriteLine($"Job: {createdUserData.Job}");
+            _specFlowOutputHelper.WriteLine($"ID: {createdUserData.Id}");
+            _specFlowOutputHelper.WriteLine($"CreatedAt: {createdUserData.CreatedAt}");
+
+            _specFlowOutputHelper.WriteLine("------------------------------------------");
+        }
+
+        [Then(@"the updated user data is returned")]
+        public void ThenTheUpdatedUserDataIsReturned(Table expectedTableData)
+        {
+            var expectedData = expectedTableData.CreateInstance<UpdateUser>();
+            var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
+            UpdateUser updateUserData = JsonConvert.DeserializeObject<UpdateUser>(responseBody); 
+            updateUserData.Should().BeEquivalentTo(expectedData);
+
+            _specFlowOutputHelper.WriteLine($"Name: {updateUserData.Name}");
+            _specFlowOutputHelper.WriteLine($"Job: {updateUserData.Job}");
+            _specFlowOutputHelper.WriteLine($"Updated at: {updateUserData.UpdatedAt}");
+
+            _specFlowOutputHelper.WriteLine("------------------------------------------");
         }
 
         [Then(@"the id and token are received")]
         public void ThenTheIdAndTokenAreReceived()
         {
-            RegisterData postJsonResponse = JsonConvert.DeserializeObject<RegisterData>(_restResponse.Content);
+            var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
+            RegisterData postJsonResponse = JsonConvert.DeserializeObject<RegisterData>(responseBody);
 
-            log.Info($"Id: {postJsonResponse.Id}");
-            log.Info($"Token: {postJsonResponse.Token}");
+            _specFlowOutputHelper.WriteLine($"Id: {postJsonResponse.Id}");
+            _specFlowOutputHelper.WriteLine($"Token: {postJsonResponse.Token}");
+
+            _specFlowOutputHelper.WriteLine("------------------------------------------");
         }
 
-        [When(@"User sends the (POST|) request to login unsuccessfully with data in the request body")]
-        public void WhenUserSendsThePOSTRequestToLoginUnsuccessfullyWithDataInTheRequestBody(Method restMethod, Table table)
+        [Then(@"the error ""(.*)"" is returned")]
+        public void ThenTheErrorIsReturned(string expectedErrorMessage)
         {
-            _restClient = new RestClient(RouteConstants.LoginEndpoint);
-            var loginData = table.CreateInstance<LoginData>();
-            var postRequestUnsuccessfulLogin = new RestRequest(restMethod.ToString())
-            .AddJsonBody(loginData);
-            _restResponse = _restClient.Execute(postRequestUnsuccessfulLogin);
-        }
+            var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
+            UnsuccessfulLogin errorMessageUnsuccessfulLogin = JsonConvert.DeserializeObject<UnsuccessfulLogin>(responseBody);
 
-        [Then(@"the error is returned")]
-        public void ThenTheErrorIsReturned()
-        {
-            UnsuccessfulLogin postJsonResponseUnsuccessfulLogin = JsonConvert.DeserializeObject<UnsuccessfulLogin>(_restResponse.Content);
+            errorMessageUnsuccessfulLogin.Error.Should().Be(expectedErrorMessage);
 
-            log.Info($"Error: {postJsonResponseUnsuccessfulLogin.Error}");
-        }
-
-        [When(@"User sends the (GET|) request to page (.*) for the delayed response")]
-        public void WhenUserSendsTheGETRequestForTheDelayedResponse(int pageNumber, Method restMethod)
-        {
-            _restClient = new RestClient(new Uri(RouteConstants.UserOperationEndpoint, $"?delay={pageNumber}"));
-            var postRequestDelayed = new RestRequest(restMethod.ToString());
-
-            _restResponse = _restClient.Execute(postRequestDelayed);
+            _specFlowOutputHelper.WriteLine($"Error: {errorMessageUnsuccessfulLogin.Error}");
+            _specFlowOutputHelper.WriteLine("------------------------------------------");
         }
 
         [Then(@"the users list is returned")]
-        public void ThenTheUsersListIsReturned()
+        public void ThenTheUsersListIsReturned(Table expectedTableData)
         {
-            var usersList = JsonConvert.DeserializeObject<UsersList>(_restResponse.Content);
+            var expectedData = expectedTableData.CreateSet<UserInformation>();
+            var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
+            var usersList = JsonConvert.DeserializeObject<UsersList>(responseBody);
+            usersList.Items.Should().BeEquivalentTo(expectedData);
 
             foreach (var item in usersList.Items)
             {
-                log.Info($"Id: {item.Id}");
-                log.Info($"Email: {item.Email}");
-                log.Info($"First Name: {item.FirstName}");
-                log.Info($"Last Name: {item.LastName}");
-                log.Info($"Avatar: {item.Avatar}");
+                _specFlowOutputHelper.WriteLine($"Id: {item.Id}");
+                _specFlowOutputHelper.WriteLine($"Email: {item.Email}");
+                _specFlowOutputHelper.WriteLine($"First Name: {item.FirstName}");
+                _specFlowOutputHelper.WriteLine($"Last Name: {item.LastName}");
+                _specFlowOutputHelper.WriteLine($"Avatar: {item.Avatar}");
             }
+            _specFlowOutputHelper.WriteLine("------------------------------------------");
+
+        }
+
+        [Then(@"the ""([^""]*)"" status code is received")]
+        public void ThenTheStatusCodeIsReceived(HttpStatusCode expectedStatusCode)
+        {
+            var response = ScenarioContext.Get<RestResponse>(ContextConstants.Response);
+
+            HttpStatusCode actualStatusCode = response.StatusCode;
+
+            actualStatusCode.Should().Be(expectedStatusCode);
+            _specFlowOutputHelper.WriteLine($"Actual status code: {actualStatusCode}");
+            _specFlowOutputHelper.WriteLine($"Expected status code: {expectedStatusCode}");
         }
 
     }

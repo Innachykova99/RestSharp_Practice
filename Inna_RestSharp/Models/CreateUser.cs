@@ -1,19 +1,19 @@
-﻿using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
 
 namespace Inna_RestSharp.Models
 {
     internal class CreateUser
     {
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("job")]
+        [JsonProperty("job")]
         public string Job { get; set; }
 
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public string Id { get; }
 
-        [JsonPropertyName("createdAt")]
+        [JsonProperty("createdAt")]
         public string CreatedAt { get; }
     }
 

@@ -35,19 +35,5 @@ namespace Inna_RestSharp.Options
             return _restResponse.Content;
         }
 
-        //public async Task GetDataFromApi(string endpoint, RestClient _restClient)
-        //{
-        //    var _restResponse = await ExecuteMethod(endpoint);
-
-        //    var userData = System.Text.Json.JsonSerializer.Deserialize<Data>(_restResponse.Content);
-
-        //    Console.WriteLine($"User ID: {userData.Id}");
-        //    Console.WriteLine($"First Name: {userData.FirstName}");
-        //    Console.WriteLine($"Last Name: {userData.LastName}");
-        //    Console.WriteLine($"Email: {userData.Email}");
-        //    Console.WriteLine($"Avatar: {userData.Avatar}");
-        //}
-
-
     }
 }

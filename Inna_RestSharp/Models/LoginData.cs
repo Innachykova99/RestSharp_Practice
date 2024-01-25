@@ -1,16 +1,16 @@
-﻿using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
 
 namespace Inna_RestSharp.Models
 {
     internal class LoginData
     {
-        [JsonPropertyName("email")]
+        [JsonProperty("email")]
         public string Email { get; set; }
     }
 
     internal class UnsuccessfulLogin
     {
-        [JsonPropertyName("error")]
-        public string Error { get; }
+        [JsonProperty("error")]
+        public string Error { get; set; }
     }
 }

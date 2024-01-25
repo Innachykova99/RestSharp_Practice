@@ -1,16 +1,16 @@
-﻿using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
 
 namespace Inna_RestSharp.Models
 {
     internal class UpdateUser
     {
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("job")]
+        [JsonProperty("job")]
         public string Job { get; set; }
 
-        [JsonPropertyName("updatedAt")]
+        [JsonProperty("updatedAt")]
         public string UpdatedAt { get; }
     }
 }
