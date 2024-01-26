@@ -11,9 +11,9 @@ namespace Inna_RestSharp.Models
         public string Password { get; set; }
 
         [JsonProperty("id")]
-        public string Id { get; }
+        public string Id { get; set; }
 
         [JsonProperty("token")]
-        public string Token { get; }
+        public string Token { get; set; }
     }
 }

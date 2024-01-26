@@ -2,7 +2,6 @@
 using Inna_RestSharp.Models;
 using Newtonsoft.Json;
 using RestSharp;
-using System.Net;
 using TechTalk.SpecFlow.Assist;
 using TechTalk.SpecFlow.Infrastructure;
 
@@ -60,7 +59,6 @@ namespace Inna_RestSharp.Steps
 
             _scenarioContext.Add(ContextConstants.Response, response);
             _scenarioContext["CreateUserData"] = createUserData;
-
         }
 
         [When(@"User sends the (PUT|PATCH|) request to users page (.*) to update a user with data in the request body")]
@@ -116,48 +114,41 @@ namespace Inna_RestSharp.Steps
 
             _scenarioContext.Add(ContextConstants.Response, response);
         }
-
+        
         [Then(@"the list of users is returned")]
         public void ThenTheListOfUsersIsDisplayed(Table expectedTableData)
         {
             var expectedData = expectedTableData.CreateSet<UserInformation>();
             var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
-            UsersList usersList = JsonConvert.DeserializeObject<UsersList>(responseBody);
+            var usersList = JsonConvert.DeserializeObject<UsersList>(responseBody);
+
+            usersList.Items.Should().BeEquivalentTo(expectedData);
 
             foreach (var expectedUser in expectedData)
             {
-                var actualUser = usersList.Items.FirstOrDefault(u => u.Id == expectedUser.Id); // don't get how it works, maybe find another way
-
-                actualUser.Email.Should().Be(expectedUser.Email);
-                actualUser.FirstName.Should().Be(expectedUser.FirstName);
-                actualUser.LastName.Should().Be(expectedUser.LastName);
-                actualUser.Avatar.Should().Be(expectedUser.Avatar);
-
-                _specFlowOutputHelper.WriteLine($"Id: {actualUser.Id}");
-                _specFlowOutputHelper.WriteLine($"Email: {actualUser.Email}");
-                _specFlowOutputHelper.WriteLine($"First Name: {actualUser.FirstName}");
-                _specFlowOutputHelper.WriteLine($"Last Name: {actualUser.LastName}");
-                _specFlowOutputHelper.WriteLine($"Avatar: {actualUser.Avatar}");
+                _specFlowOutputHelper.WriteLine($"Id: {expectedUser.Id}");
+                _specFlowOutputHelper.WriteLine($"Email: {expectedUser.Email}");
+                _specFlowOutputHelper.WriteLine($"First Name: {expectedUser.FirstName}");
+                _specFlowOutputHelper.WriteLine($"Last Name: {expectedUser.LastName}");
+                _specFlowOutputHelper.WriteLine($"Avatar: {expectedUser.Avatar}");
             }
-
-            _specFlowOutputHelper.WriteLine("------------------------------------------");
+                _specFlowOutputHelper.WriteLine("------------------------------------------");
         }
 
-        [Then(@"the user data is returned")] // don't work correctly: Expected property singleUserData.<property> to be "...", but found <null>.
+        [Then(@"the user data is returned")]
         public void ThenTheUserDataIsReturned(Table expectedTableData)
         {
             var expectedData = expectedTableData.CreateInstance<UserInformation>();
             var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
-            UserInformation singleUserData = JsonConvert.DeserializeObject<UserInformation>(responseBody);
+            var singleUserData = JsonConvert.DeserializeObject<SingleUserData>(responseBody); 
 
-            _specFlowOutputHelper.WriteLine($"Response Body: {responseBody}"); // for debug to ensure that correct response data received
-            singleUserData.Should().BeEquivalentTo(expectedData);
+            singleUserData.Data.Should().BeEquivalentTo(expectedData);
 
-            _specFlowOutputHelper.WriteLine($"Id: {singleUserData.Id}");
-            _specFlowOutputHelper.WriteLine($"Email: {singleUserData.Email}");
-            _specFlowOutputHelper.WriteLine($"First Name: {singleUserData.FirstName}");
-            _specFlowOutputHelper.WriteLine($"Last Name: {singleUserData.LastName}");
-            _specFlowOutputHelper.WriteLine($"Avatar: {singleUserData.Avatar}");
+            _specFlowOutputHelper.WriteLine($"Id: {singleUserData.Data.Id}");
+            _specFlowOutputHelper.WriteLine($"Email: {singleUserData.Data.Email}");
+            _specFlowOutputHelper.WriteLine($"First Name: {singleUserData.Data.FirstName}");
+            _specFlowOutputHelper.WriteLine($"Last Name: {singleUserData.Data.LastName}");
+            _specFlowOutputHelper.WriteLine($"Avatar: {singleUserData.Data.Avatar}");
 
             _specFlowOutputHelper.WriteLine("------------------------------------------");
         }
@@ -167,9 +158,13 @@ namespace Inna_RestSharp.Steps
         {
             var expectedData = expectedTableData.CreateInstance<CreateUser>();
             var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
-          
-            CreateUser createdUserData = JsonConvert.DeserializeObject<CreateUser>(responseBody);
-            createdUserData.Should().BeEquivalentTo(expectedData);
+
+            var createdUserData = JsonConvert.DeserializeObject<CreateUser>(responseBody);
+
+            createdUserData.Name.Should().Be(expectedData.Name);
+            createdUserData.Job.Should().BeEquivalentTo(expectedData.Job);
+            int.TryParse(createdUserData.Id, out _).Should().BeTrue();
+            createdUserData.CreatedAt.Should().BeBefore(DateTime.Now);
 
             _specFlowOutputHelper.WriteLine($"Name: {createdUserData.Name}");
             _specFlowOutputHelper.WriteLine($"Job: {createdUserData.Job}");
@@ -184,12 +179,16 @@ namespace Inna_RestSharp.Steps
         {
             var expectedData = expectedTableData.CreateInstance<UpdateUser>();
             var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
-            UpdateUser updateUserData = JsonConvert.DeserializeObject<UpdateUser>(responseBody); 
-            updateUserData.Should().BeEquivalentTo(expectedData);
+            
+            var updatedUserData = JsonConvert.DeserializeObject<UpdateUser>(responseBody);
 
-            _specFlowOutputHelper.WriteLine($"Name: {updateUserData.Name}");
-            _specFlowOutputHelper.WriteLine($"Job: {updateUserData.Job}");
-            _specFlowOutputHelper.WriteLine($"Updated at: {updateUserData.UpdatedAt}");
+            updatedUserData.Name.Should().Be(expectedData.Name);
+            updatedUserData.Job.Should().Be(expectedData.Job);
+            updatedUserData.UpdatedAt.Should().BeBefore(DateTime.Now);
+
+            _specFlowOutputHelper.WriteLine($"Name: {updatedUserData.Name}");
+            _specFlowOutputHelper.WriteLine($"Job: {updatedUserData.Job}");
+            _specFlowOutputHelper.WriteLine($"Updated at: {updatedUserData.UpdatedAt}");
 
             _specFlowOutputHelper.WriteLine("------------------------------------------");
         }
@@ -200,9 +199,10 @@ namespace Inna_RestSharp.Steps
             var responseBody = _scenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
             RegisterData postJsonResponse = JsonConvert.DeserializeObject<RegisterData>(responseBody);
 
+            postJsonResponse.Should().NotBeNull();
+
             _specFlowOutputHelper.WriteLine($"Id: {postJsonResponse.Id}");
             _specFlowOutputHelper.WriteLine($"Token: {postJsonResponse.Token}");
-
             _specFlowOutputHelper.WriteLine("------------------------------------------");
         }
 
@@ -235,21 +235,6 @@ namespace Inna_RestSharp.Steps
                 _specFlowOutputHelper.WriteLine($"Avatar: {item.Avatar}");
             }
             _specFlowOutputHelper.WriteLine("------------------------------------------");
-
         }
-
-        [Then(@"the ""([^""]*)"" status code is received")]
-        public void ThenTheStatusCodeIsReceived(HttpStatusCode expectedStatusCode)
-        {
-            var response = ScenarioContext.Get<RestResponse>(ContextConstants.Response);
-
-            HttpStatusCode actualStatusCode = response.StatusCode;
-
-            actualStatusCode.Should().Be(expectedStatusCode);
-            _specFlowOutputHelper.WriteLine($"Actual status code: {actualStatusCode}");
-            _specFlowOutputHelper.WriteLine($"Expected status code: {expectedStatusCode}");
-        }
-
     }
-
 }

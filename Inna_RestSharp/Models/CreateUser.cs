@@ -11,10 +11,9 @@ namespace Inna_RestSharp.Models
         public string Job { get; set; }
 
         [JsonProperty("id")]
-        public string Id { get; }
+        public string Id { get; set; }
 
         [JsonProperty("createdAt")]
-        public string CreatedAt { get; }
+        public string CreatedAt { get; set; }
     }
-
 }

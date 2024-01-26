@@ -8,6 +8,12 @@ namespace Inna_RestSharp.Models
         public List<UserInformation> Items { get; set; }
     }
 
+    internal class SingleUserData
+    {
+        [JsonProperty("data")]
+        public UserInformation Data { get; set; }
+    }
+
     internal class UserInformation
     {
         [JsonProperty("first_name")]

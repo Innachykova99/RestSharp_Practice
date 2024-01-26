@@ -7,10 +7,4 @@ namespace Inna_RestSharp.Models
         [JsonProperty("email")]
         public string Email { get; set; }
     }
-
-    internal class UnsuccessfulLogin
-    {
-        [JsonProperty("error")]
-        public string Error { get; set; }
-    }
 }
