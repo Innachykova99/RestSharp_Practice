@@ -5,7 +5,7 @@ using TechTalk.SpecFlow.Infrastructure;
 namespace Task2RestSharp.Steps
 {
     [Binding]
-    public class MathOperationsSteps : CommonSteps
+    public class MathOperationsSteps : BaseSteps
     {
         private RestClient _restClient;
         private RestResponse _restResponse;

@@ -10,15 +10,11 @@ namespace Task2RestSharp.Steps
     [Binding]
     public class CommonSteps : BaseSteps
     {
-        protected readonly ISpecFlowOutputHelper OutputHelper;
-        protected readonly ScenarioContext scenarioContext;
-
         public CommonSteps(ISpecFlowOutputHelper outputHelper, ScenarioContext scenarioContext) : base(outputHelper, scenarioContext)
         {
-            OutputHelper = outputHelper ?? throw new ArgumentNullException(nameof(outputHelper));
-            scenarioContext = scenarioContext ?? throw new ArgumentNullException(nameof(scenarioContext));
+
         }
-            
+
         [Then(@"the ""([^""]*)"" status code is received")]
         public void ThenTheStatusCodeIsReceived(HttpStatusCode expectedStatusCode)
         {
@@ -39,6 +35,15 @@ namespace Task2RestSharp.Steps
             var actualResult = JsonConvert.DeserializeObject<MathOperationResult>(responseBody);
 
             actualResult.Result.Should().BeEquivalentTo(mathOperationResult);
+        }
+
+        [Then(@"the received result should be (.*)")]
+        public void ThenTheReceivedResultShouldBe(string sqrtResult)
+        {
+            var responseBody = ScenarioContext.Get<RestResponse>(ContextConstants.Response).Content;
+            var actualResult = responseBody;
+
+            actualResult.Should().BeEquivalentTo(sqrtResult);
         }
     }
 }

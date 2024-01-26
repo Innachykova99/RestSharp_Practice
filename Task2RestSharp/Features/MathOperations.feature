@@ -29,4 +29,4 @@ Scenario: 2.1.4. Perform division on two numbers
 Scenario: 2.1.5. Find square root
 	When the user enters 16 to find square root by GET request
 	Then the "200" status code is received
-		And the result should be 4
+		And the received result should be 4
