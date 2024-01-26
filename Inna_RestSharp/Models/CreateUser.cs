@@ -14,6 +14,6 @@ namespace Inna_RestSharp.Models
         public string Id { get; set; }
 
         [JsonProperty("createdAt")]
-        public string CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }
