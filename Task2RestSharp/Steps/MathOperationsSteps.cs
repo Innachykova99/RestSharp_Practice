@@ -8,7 +8,6 @@ namespace Task2RestSharp.Steps
     public class MathOperationsSteps : BaseSteps
     {
         private RestClient _restClient;
-        private RestResponse _restResponse;
         private const string baseUrl = "http://api.mathjs.org/v4";
 
         public MathOperationsSteps(ISpecFlowOutputHelper outputHelper, ScenarioContext scenarioContext) : base(outputHelper, scenarioContext)
