@@ -30,3 +30,14 @@ Scenario: 2.1.5. Find square root
 	When the user enters 16 to find square root by GET request
 	Then the "200" status code is received
 		And the received result should be 4
+
+@Scenario_2.1.6
+Scenario: 2.1.6. Perform addition, substraction, multiplication and division math operations
+	When the user performs math operation for two numbers: 54 and 19 by POST request
+	Then the "200" status code is received
+		And the received result should contain the following results:
+			| Result      |
+			| 73          |
+			| 35          |
+			| 1026        |
+			| 2.842105263 |

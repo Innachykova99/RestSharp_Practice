@@ -45,5 +45,19 @@ namespace Task2RestSharp.Steps
 
             actualResult.Should().BeEquivalentTo(sqrtResult);
         }
+
+        [Then(@"the received result should contain the following results:")]
+        public void ThenTheReceivedResultShouldContaintheFollowingResults(Table table)
+        {
+            var expectedResults = table.Rows.Select(row => row["Result"]).ToList();
+            var response = ScenarioContext.Get<RestResponse>(ContextConstants.Response);
+
+            var responseBody = response.Content;
+
+            var actualResult = JsonConvert.DeserializeObject<MathOperationResults>(responseBody);
+            var actualResults = actualResult.Results.Select(value => value.ToString()).ToList();
+
+            actualResults.Should().BeEquivalentTo(expectedResults);
+        }
     }
 }

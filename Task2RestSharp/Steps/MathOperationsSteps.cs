@@ -1,5 +1,8 @@
+using Newtonsoft.Json;
 using RestSharp;
+using System.Net;
 using Task2RestSharp.Constants;
+using Task2RestSharp.Models;
 using TechTalk.SpecFlow.Infrastructure;
 
 namespace Task2RestSharp.Steps
@@ -20,7 +23,7 @@ namespace Task2RestSharp.Steps
         public void WhenTheUserAddsAnd(double summand1, double summand2, Method method)
         {
             var additionRequest = new RestRequest(RouteConstants.ExprEndpoint, method);
-           
+
             var requestBody = new
             {
                 expr = $"({summand1})+({summand2})"
@@ -37,7 +40,7 @@ namespace Task2RestSharp.Steps
         public void WhenTheUserSubstractsFrom(double minuend, double subtrahend, Method method)
         {
             var substractionRequest = new RestRequest(RouteConstants.ExprEndpoint, method);
-           
+
             var requestBody = new
             {
                 expr = $"({subtrahend})-({minuend})"
@@ -54,7 +57,7 @@ namespace Task2RestSharp.Steps
         public void WhenTheUserMultipliesAnd(double multiplier, double multiplicand, Method method)
         {
             var multiplicationRequest = new RestRequest(RouteConstants.ExprEndpoint, method);
-          
+
             var requestBody = new
             {
                 expr = $"({multiplier})*({multiplicand})"
@@ -71,7 +74,7 @@ namespace Task2RestSharp.Steps
         public void WhenTheUserDividesOn(double dividend, double divisor, Method method)
         {
             var divisionRequest = new RestRequest(RouteConstants.ExprEndpoint, method);
-            
+
             var requestBody = new
             {
                 expr = $"({dividend})/({divisor})"
@@ -89,6 +92,35 @@ namespace Task2RestSharp.Steps
         {
             var findSquareRootRequest = new RestRequest($"{RouteConstants.ExprEndpoint}sqrt({numberForSqrt})", method);
             var response = _restClient.Execute(findSquareRootRequest);
+
+            ScenarioContext.Add(ContextConstants.Response, response);
+        }
+
+        [When(@"the user performs math operation for two numbers: (.*) and (.*) by (POST|) request")]
+        public void WhenTheUserPerformsForTwoNumbersAndByPOSTRequest(int p1, int p2, Method method)
+        {
+            var generalRequest = new RestRequest(RouteConstants.ExprEndpoint, method);
+
+            var expressions = new[]
+            {
+            $"({p1})+({p2})",
+
+            $"({p1})-({p2})",
+
+            $"({p1})*({p2})",
+
+            $"({p1})/({p2})"
+
+            };
+
+            var requestBody = new
+            {
+                expr = expressions,
+                precision = 10
+            };
+
+            generalRequest.AddJsonBody(requestBody);
+            var response = _restClient.Execute(generalRequest);
 
             ScenarioContext.Add(ContextConstants.Response, response);
         }
