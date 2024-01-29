@@ -96,32 +96,20 @@ namespace Task2RestSharp.Steps
             ScenarioContext.Add(ContextConstants.Response, response);
         }
 
-        [When(@"the user performs math operation for two numbers: (.*) and (.*) by (POST|) request")]
-        public void WhenTheUserPerformsForTwoNumbersAndByPOSTRequest(int p1, int p2, Method method)
+        [When(@"the user performs math operation for two numbers by (POST|) request")]
+        public void WhenTheUserPerformsMathOperationForTwoNumbersByPOSTRequest(Method method, Table table)
         {
-            var generalRequest = new RestRequest(RouteConstants.ExprEndpoint, method);
+            var expressions = table.Rows.Select(row => row["Expression"]).ToList();
 
-            var expressions = new[]
-            {
-            $"({p1})+({p2})",
-
-            $"({p1})-({p2})",
-
-            $"({p1})*({p2})",
-
-            $"({p1})/({p2})"
-
-            };
-
-            var requestBody = new
+            var requestBody = new MathOperationRequest
             {
                 expr = expressions,
-                precision = 10
+                Precision = 10
             };
-
+            var generalRequest = new RestRequest(RouteConstants.ExprEndpoint, method);
             generalRequest.AddJsonBody(requestBody);
-            var response = _restClient.Execute(generalRequest);
 
+            var response = _restClient.Execute(generalRequest);
             ScenarioContext.Add(ContextConstants.Response, response);
         }
     }
